@@ -21,7 +21,7 @@ const stepLabels: Record<Step, string> = {
 
 const segments = [
   { mode: "Train", icon: Train, from: "Manchester Piccadilly", to: "London Euston", time: "2h 07m", price: 32, color: "primary" },
-  { mode: "Tube", icon: Train, from: "Euston", to: "Heathrow T2", time: "52m", price: 6.70, color: "accent" },
+  { mode: "Tube", icon: Train, from: "Euston", to: "Heathrow T2", time: "52m", price: 0, color: "accent", free: true },
   { mode: "Flight", icon: Plane, from: "London Heathrow", to: "Mumbai BOM", time: "9h 15m", price: 387, color: "trainline-gold" },
 ];
 
@@ -203,7 +203,7 @@ const StudentDemo = () => {
                                 <p className="text-sm font-semibold text-foreground mt-0.5">{seg.from} → {seg.to}</p>
                               </div>
                               <div className="text-right">
-                                <p className="text-sm font-bold text-foreground">£{seg.price.toFixed(2)}</p>
+                                <p className={`text-sm font-bold ${(seg as any).free ? "text-trainline-success" : "text-foreground"}`}>{(seg as any).free ? "FREE" : `£${seg.price.toFixed(2)}`}</p>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
                                   <Clock className="w-3 h-3" /> {seg.time}
                                 </p>

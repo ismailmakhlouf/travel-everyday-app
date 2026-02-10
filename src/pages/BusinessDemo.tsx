@@ -1,71 +1,87 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Train, Plane, ArrowRight, ArrowLeft, Briefcase, MapPin, Users, Star, 
-  Hotel, Luggage, Crown, Clock, Check, CreditCard, Sparkles, 
-  Wine, Wifi, ShieldCheck, Globe, Car, Baby, ChevronRight
+import {
+  Train, Plane, ArrowRight, ArrowLeft, Users, MapPin,
+  Hotel, Luggage, Clock, Check, CreditCard, Sparkles,
+  Globe, Car, Baby, Crown, Wine, ShieldCheck, TrendingUp,
+  Gift, UserPlus
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
 
-const STEPS = ["search", "results", "upgrades", "multitrip", "checkout", "confirmation"] as const;
+const STEPS = ["search", "itinerary", "checkout", "confirmation"] as const;
 type Step = typeof STEPS[number];
 
 const stepLabels: Record<Step, string> = {
   search: "Search",
-  results: "Journey",
-  upgrades: "Upgrades",
-  multitrip: "Multi-Trip",
+  itinerary: "Itinerary",
   checkout: "Book",
   confirmation: "Done",
 };
 
-const segments = [
-  { mode: "First Class", icon: Train, from: "London St Pancras", to: "Paris Gare du Nord", time: "2h 16m", price: 189, color: "primary", detail: "Eurostar" },
-  { mode: "TGV First", icon: Train, from: "Paris Gare de Lyon", to: "Zürich HB", time: "4h 03m", price: 145, color: "primary", detail: "SNCF" },
-  { mode: "Flight", icon: Plane, from: "Zürich ZRH", to: "Dubai DXB", time: "6h 10m", price: 520, color: "trainline-gold", detail: "Emirates" },
+// Marcus's journey (London → Zürich)
+const marcusSegments = [
+  { id: "m1", mode: "Eurostar", icon: Train, from: "London St Pancras", to: "Paris Gare du Nord", time: "2h 16m", price: 89, marketPrice: 129, detail: "Standard" },
+  { id: "m2", mode: "TGV", icon: Train, from: "Paris Gare de Lyon", to: "Zürich HB", time: "4h 03m", price: 72, marketPrice: 98, detail: "SNCF" },
 ];
 
-const upgrades = [
-  { name: "Eurostar Lounge Access", price: 35, icon: Crown, desc: "Priority boarding, champagne & canapés at St Pancras", tag: "Popular" },
-  { name: "Extra Luggage (3 bags)", price: 25, icon: Luggage, desc: "Pre-registered checked luggage across all segments", tag: "Family" },
-  { name: "Airport Lounge — Zürich", price: 42, icon: Wine, desc: "Swiss First Lounge with spa showers & hot food", tag: "Premium" },
-  { name: "Priority Fast Track — Dubai", price: 18, icon: ShieldCheck, desc: "Skip immigration queues on arrival", tag: "Time saver" },
-  { name: "Hotel: Jumeirah Al Naseem", price: 285, icon: Hotel, desc: "5★ Sea View Suite · 3 nights · Inc. breakfast", tag: "Recommended" },
-  { name: "Airport Transfer — Dubai", price: 45, icon: Car, desc: "Private car from DXB to hotel, child seat included", tag: "Convenience" },
+// Anika's journey (Berlin → Zürich)
+const anikaSegments = [
+  { id: "a1", mode: "ICE", icon: Train, from: "Berlin Hbf", to: "Zürich HB", time: "7h 45m", price: 79, marketPrice: 112, detail: "Deutsche Bahn" },
 ];
 
-// Multi-trip planner data
-const friendJourney = {
-  name: "James",
-  from: "Paris",
-  segments: [
-    { mode: "TGV", from: "Paris", to: "Zürich", time: "4h 03m", price: "£98" },
-  ],
-};
+// Shared segments (Zürich → Dubai, everyone together)
+const sharedSegments = [
+  { id: "s1", mode: "Flight", icon: Plane, from: "Zürich ZRH", to: "Dubai DXB", time: "6h 10m", price: 285, marketPrice: 410, detail: "Emirates" },
+];
 
-const spouseJourney = {
-  name: "Anika",
-  from: "Berlin",
-  segments: [
-    { mode: "ICE", from: "Berlin", to: "Zürich", time: "7h 45m", price: "£112" },
-  ],
-};
+// Package extras (included in one price)
+const packageExtras = [
+  { id: "e1", name: "Eurostar Lounge Access", price: 0, marketPrice: 45, icon: Crown, desc: "Complimentary for Family Journeyman members", free: true, forWhom: "Marcus" },
+  { id: "e2", name: "Extra Luggage (4 bags)", price: 15, marketPrice: 40, icon: Luggage, desc: "Pre-registered across all rail segments", free: false, forWhom: "Family" },
+  { id: "e3", name: "Airport Lounge — Zürich", price: 0, marketPrice: 55, icon: Wine, desc: "Swiss First Lounge — free for families booking 3+ segments", free: true, forWhom: "Family" },
+  { id: "e4", name: "Priority Fast Track — Dubai", price: 12, marketPrice: 24, icon: ShieldCheck, desc: "Skip immigration for all family members", free: false, forWhom: "Family" },
+  { id: "e5", name: "Hotel: Jumeirah Al Naseem", price: 195, marketPrice: 310, icon: Hotel, desc: "Family Suite · 3 nights · Inc. breakfast · Kids stay free", free: false, forWhom: "Family" },
+  { id: "e6", name: "Airport Transfer — Dubai", price: 35, marketPrice: 65, icon: Car, desc: "Private MPV from DXB to hotel, 2 child seats included", free: false, forWhom: "Family" },
+];
+
+// Kids
+const kids = [
+  { name: "Liam", age: 8, discount: "50% off rail, free hotel" },
+  { name: "Sophie", age: 5, discount: "Free rail, free hotel" },
+  { name: "Ava", age: 2, discount: "Free all segments (infant)" },
+];
+
+// Kid surcharges
+const kidSurcharges = [
+  { name: "Liam (8)", amount: 112, detail: "50% rail + child flight fare" },
+  { name: "Sophie (5)", amount: 68, detail: "Free rail, child flight fare" },
+  { name: "Ava (2)", amount: 0, detail: "Infant — free on all segments" },
+];
 
 const BusinessDemo = () => {
   const [currentStep, setCurrentStep] = useState<Step>("search");
-  const [selectedUpgrades, setSelectedUpgrades] = useState<string[]>([]);
   const stepIndex = STEPS.indexOf(currentStep);
 
   const next = () => { if (stepIndex < STEPS.length - 1) setCurrentStep(STEPS[stepIndex + 1]); };
   const prev = () => { if (stepIndex > 0) setCurrentStep(STEPS[stepIndex - 1]); };
 
-  const toggleUpgrade = (name: string) => {
-    setSelectedUpgrades(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
-  };
+  const marcusTotal = marcusSegments.reduce((s, seg) => s + seg.price, 0);
+  const anikaTotal = anikaSegments.reduce((s, seg) => s + seg.price, 0);
+  const sharedTotal = sharedSegments.reduce((s, seg) => s + seg.price, 0);
+  const extrasTotal = packageExtras.reduce((s, e) => s + e.price, 0);
+  const kidsTotal = kidSurcharges.reduce((s, k) => s + k.amount, 0);
 
-  const totalJourney = segments.reduce((s, seg) => s + seg.price, 0);
-  const upgradesTotal = upgrades.filter(u => selectedUpgrades.includes(u.name)).reduce((s, u) => s + u.price, 0);
-  const grandTotal = totalJourney + upgradesTotal;
+  // Adults pay for shared segments individually
+  const adultFlights = sharedTotal * 2;
+  const packagePrice = marcusTotal + anikaTotal + adultFlights + extrasTotal + kidsTotal;
+
+  const marcusMarket = marcusSegments.reduce((s, seg) => s + seg.marketPrice, 0);
+  const anikaMarket = anikaSegments.reduce((s, seg) => s + seg.marketPrice, 0);
+  const sharedMarket = sharedSegments.reduce((s, seg) => s + seg.marketPrice, 0);
+  const extrasMarket = packageExtras.reduce((s, e) => s + e.marketPrice, 0);
+  const marketTotal = marcusMarket + anikaMarket + sharedMarket * 2 + extrasMarket + 250; // kids at market
+  const totalSavings = marketTotal - packagePrice;
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,9 +99,9 @@ const BusinessDemo = () => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center">
-                <Briefcase className="w-4 h-4 text-accent" />
+                <Users className="w-4 h-4 text-accent" />
               </div>
-              <span className="text-sm text-muted-foreground hidden sm:inline">Marcus Chen · Premium</span>
+              <span className="text-sm text-muted-foreground hidden sm:inline">Marcus Chen · Family</span>
             </div>
           </div>
         </div>
@@ -94,7 +110,7 @@ const BusinessDemo = () => {
       {/* Progress */}
       <div className="fixed top-16 left-0 right-0 z-40 bg-card/80 backdrop-blur border-b border-border/30">
         <div className="container mx-auto px-6 py-3">
-          <div className="flex items-center justify-between max-w-2xl mx-auto">
+          <div className="flex items-center justify-between max-w-xl mx-auto">
             {STEPS.map((step, i) => (
               <button key={step} onClick={() => i <= stepIndex && setCurrentStep(step)} className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -107,7 +123,7 @@ const BusinessDemo = () => {
                 <span className={`text-xs font-medium hidden md:inline ${i <= stepIndex ? "text-foreground" : "text-muted-foreground"}`}>
                   {stepLabels[step]}
                 </span>
-                {i < STEPS.length - 1 && <div className={`w-8 h-0.5 hidden md:block ${i < stepIndex ? "bg-primary" : "bg-border"}`} />}
+                {i < STEPS.length - 1 && <div className={`w-12 h-0.5 hidden md:block ${i < stepIndex ? "bg-primary" : "bg-border"}`} />}
               </button>
             ))}
           </div>
@@ -123,301 +139,351 @@ const BusinessDemo = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 0.35 }}
-            className="max-w-4xl mx-auto"
+            className="max-w-5xl mx-auto"
           >
-            {/* Search */}
+            {/* SEARCH */}
             {currentStep === "search" && (
               <div className="space-y-8">
                 <div className="text-center mb-10">
-                  <span className="text-xs font-medium text-accent uppercase tracking-wider">Premium Journey Demo</span>
-                  <h1 className="text-3xl md:text-4xl font-bold font-display mt-2">Plan Your Family Trip, Marcus</h1>
-                  <p className="text-muted-foreground mt-2">London → Dubai · Family of 3 · Multi-modal first class</p>
+                  <span className="text-xs font-medium text-accent uppercase tracking-wider">Family Experience Demo</span>
+                  <h1 className="text-3xl md:text-4xl font-bold font-display mt-2">Plan Your Family Holiday, Marcus</h1>
+                  <p className="text-muted-foreground mt-2">2 adults, 3 kids, 2 origins — one seamless package</p>
                 </div>
 
-                <div className="rounded-2xl bg-card-gradient border border-border/40 p-8 shadow-card max-w-2xl mx-auto space-y-4">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1.5 block">From</label>
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border/30">
-                      <MapPin className="w-5 h-5 text-primary shrink-0" />
-                      <span className="text-foreground font-medium">London St Pancras</span>
+                <div className="rounded-2xl bg-card-gradient border border-border/40 p-8 shadow-card max-w-2xl mx-auto space-y-5">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">Marcus departs from</label>
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border/30">
+                        <MapPin className="w-5 h-5 text-primary shrink-0" />
+                        <span className="text-foreground font-medium">London St Pancras</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">Anika departs from</label>
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border/30">
+                        <MapPin className="w-5 h-5 text-[hsl(25,80%,55%)] shrink-0" />
+                        <span className="text-foreground font-medium">Berlin Hbf</span>
+                      </div>
                     </div>
                   </div>
+
                   <div className="flex justify-center"><ArrowRight className="w-4 h-4 text-muted-foreground rotate-90" /></div>
+
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1.5 block">To</label>
+                    <label className="text-xs text-muted-foreground mb-1.5 block">Destination</label>
                     <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border/30">
                       <Globe className="w-5 h-5 text-accent shrink-0" />
                       <span className="text-foreground font-medium">Dubai, UAE</span>
                       <span className="ml-auto text-xs text-accent bg-accent/10 px-2 py-1 rounded-full">via Zürich</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 mt-4">
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
                       <label className="text-xs text-muted-foreground mb-1.5 block">Depart</label>
-                      <div className="p-3 rounded-xl bg-secondary/50 border border-border/30 text-sm text-foreground">Fri, 18 Apr 2025</div>
+                      <div className="p-3 rounded-xl bg-secondary/50 border border-border/30 text-sm text-foreground">18 Apr 2025</div>
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground mb-1.5 block">Return</label>
-                      <div className="p-3 rounded-xl bg-secondary/50 border border-border/30 text-sm text-foreground">Sun, 27 Apr 2025</div>
+                      <div className="p-3 rounded-xl bg-secondary/50 border border-border/30 text-sm text-foreground">27 Apr 2025</div>
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground mb-1.5 block">Passengers</label>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">Adults</label>
                       <div className="p-3 rounded-xl bg-secondary/50 border border-border/30 text-sm text-foreground flex items-center gap-1">
-                        <Users className="w-3 h-3" /> 2 Adults + 1 Child
+                        <Users className="w-3 h-3" /> 2
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">Children</label>
+                      <div className="p-3 rounded-xl bg-secondary/50 border border-border/30 text-sm text-foreground flex items-center gap-1">
+                        <Baby className="w-3 h-3" /> 3
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 p-4 rounded-xl bg-accent/5 border border-accent/20">
+                  <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
                     <div className="flex items-center gap-2 mb-1">
                       <Sparkles className="w-4 h-4 text-accent" />
-                      <span className="text-xs font-medium text-accent">Premium Routing</span>
+                      <span className="text-xs font-medium text-accent">Family Routing</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Scenic first-class rail through Paris and the Swiss Alps, then direct Emirates flight to Dubai. Your friend James and wife Anika can converge in Zürich.
+                      Marcus travels via Paris through the Swiss Alps; Anika takes the direct ICE from Berlin. They converge in Zürich, then fly to Dubai together with all 3 kids.
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Results */}
-            {currentStep === "results" && (
-              <div className="space-y-8">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold font-display">Your Premium Route</h2>
-                  <p className="text-muted-foreground mt-2">London → Paris → Zürich → Dubai · First class throughout</p>
-                </div>
-
-                <div className="rounded-2xl bg-card-gradient border border-border/40 p-8 shadow-card">
-                  <div className="relative">
-                    <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border/50" />
-                    <div className="space-y-8">
-                      {segments.map((seg, i) => (
-                        <div key={i} className="relative flex gap-5">
-                          <div className="relative z-10 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/15">
-                            <seg.icon className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium text-primary uppercase tracking-wider">{seg.mode}</span>
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">{seg.detail}</span>
-                                </div>
-                                <p className="text-sm font-semibold text-foreground mt-0.5">{seg.from} → {seg.to}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm font-bold text-foreground">£{seg.price}</p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end"><Clock className="w-3 h-3" /> {seg.time}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-8 p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
-                    <div>
-                      <p className="text-lg font-bold text-foreground">Base: <span className="text-gradient-teal">£{totalJourney}</span></p>
-                      <p className="text-xs text-muted-foreground">Per person · First class · All segments</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-accent font-medium">Family of 3: £{totalJourney * 3}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Upgrades */}
-            {currentStep === "upgrades" && (
+            {/* ITINERARY — Swim Lanes */}
+            {currentStep === "itinerary" && (
               <div className="space-y-6">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold font-display">Elevate Your Journey</h2>
-                  <p className="text-muted-foreground mt-2">Lounge access, luggage, hotels — all in one booking</p>
+                <div className="text-center mb-6">
+                  <h2 className="text-3xl font-bold font-display">Family Itinerary</h2>
+                  <p className="text-muted-foreground mt-2">All-inclusive package · One price · Massive savings</p>
                 </div>
 
+                {/* Swim lanes header */}
                 <div className="grid md:grid-cols-2 gap-4">
-                  {upgrades.map((upgrade, i) => (
-                    <motion.button
-                      key={upgrade.name}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.06 }}
-                      onClick={() => toggleUpgrade(upgrade.name)}
-                      className={`w-full text-left rounded-2xl border p-5 transition-all ${
-                        selectedUpgrades.includes(upgrade.name)
-                          ? "bg-primary/5 border-primary/40 shadow-teal-glow"
-                          : "bg-card-gradient border-border/40 shadow-card hover:border-primary/20"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                          selectedUpgrades.includes(upgrade.name) ? "bg-primary/20" : "bg-secondary"
-                        }`}>
-                          {selectedUpgrades.includes(upgrade.name)
-                            ? <Check className="w-5 h-5 text-primary" />
-                            : <upgrade.icon className="w-5 h-5 text-muted-foreground" />}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-semibold text-foreground">{upgrade.name}</h4>
-                            <span className="text-sm font-bold text-primary">£{upgrade.price}</span>
+                  {/* Marcus Lane */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 border border-primary/30">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">Marcus's Route</p>
+                        <p className="text-xs text-muted-foreground">London → Zürich</p>
+                      </div>
+                    </div>
+
+                    {marcusSegments.map((seg) => (
+                      <div key={seg.id} className="rounded-xl bg-card-gradient border border-border/40 p-4 shadow-card">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <seg.icon className="w-4 h-4 text-primary" />
+                            <span className="text-xs font-medium text-primary uppercase">{seg.mode}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{seg.detail}</span>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">{upgrade.desc}</p>
-                          <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">{upgrade.tag}</span>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="w-3 h-3" /> {seg.time}
+                          </div>
+                        </div>
+                        <p className="text-sm font-medium text-foreground">{seg.from} → {seg.to}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-foreground">£{seg.price}</span>
+                            <span className="text-xs text-muted-foreground line-through">£{seg.marketPrice}</span>
+                          </div>
+                          <span className="text-xs font-semibold text-trainline-success">Save {Math.round((1 - seg.price / seg.marketPrice) * 100)}%</span>
                         </div>
                       </div>
-                    </motion.button>
+                    ))}
+                  </div>
+
+                  {/* Anika Lane */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[hsl(25,80%,55%)]/10 border border-[hsl(25,80%,55%)]/30">
+                      <div className="w-8 h-8 rounded-full bg-[hsl(25,80%,55%)]/20 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-[hsl(25,80%,55%)]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">Anika's Route</p>
+                        <p className="text-xs text-muted-foreground">Berlin → Zürich</p>
+                      </div>
+                    </div>
+
+                    {anikaSegments.map((seg) => (
+                      <div key={seg.id} className="rounded-xl bg-card-gradient border border-border/40 p-4 shadow-card">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <seg.icon className="w-4 h-4 text-[hsl(25,80%,55%)]" />
+                            <span className="text-xs font-medium text-[hsl(25,80%,55%)] uppercase">{seg.mode}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{seg.detail}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="w-3 h-3" /> {seg.time}
+                          </div>
+                        </div>
+                        <p className="text-sm font-medium text-foreground">{seg.from} → {seg.to}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-foreground">£{seg.price}</span>
+                            <span className="text-xs text-muted-foreground line-through">£{seg.marketPrice}</span>
+                          </div>
+                          <span className="text-xs font-semibold text-trainline-success">Save {Math.round((1 - seg.price / seg.marketPrice) * 100)}%</span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Visual spacer to align with Marcus's 2 cards */}
+                    <div className="rounded-xl border border-dashed border-border/30 p-4 flex items-center justify-center text-xs text-muted-foreground">
+                      <span>Arrives Zürich HB · 19:15</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Convergence */}
+                <div className="relative">
+                  <div className="absolute left-1/2 -top-3 w-0.5 h-3 bg-accent/40" />
+                  <div className="rounded-2xl bg-accent/5 border border-accent/30 p-5 text-center">
+                    <div className="w-12 h-12 rounded-full bg-accent/15 flex items-center justify-center mx-auto mb-2">
+                      <Globe className="w-6 h-6 text-accent" />
+                    </div>
+                    <h3 className="text-base font-bold font-display text-foreground">Family Converges in Zürich</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Marcus arrives 18:42 · Anika arrives 19:15 · Dinner at Kronenhalle, 20:00</p>
+                  </div>
+                </div>
+
+                {/* Shared flight */}
+                <div className="rounded-xl bg-card-gradient border border-accent/30 p-5 shadow-card">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Plane className="w-5 h-5 text-accent" />
+                    <span className="text-sm font-bold text-foreground">Shared Segment — Whole Family</span>
+                  </div>
+                  {sharedSegments.map((seg) => (
+                    <div key={seg.id} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{seg.from} → {seg.to}</p>
+                        <p className="text-xs text-muted-foreground">{seg.detail} · {seg.time} · 2 adults + 3 children</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-foreground">£{seg.price}/adult</span>
+                          <span className="text-xs text-muted-foreground line-through">£{seg.marketPrice}</span>
+                        </div>
+                        <span className="text-xs text-trainline-success font-semibold">Save {Math.round((1 - seg.price / seg.marketPrice) * 100)}%</span>
+                      </div>
+                    </div>
                   ))}
                 </div>
 
-                {selectedUpgrades.length > 0 && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 rounded-xl bg-trainline-success/10 border border-trainline-success/20 text-center">
+                {/* Kids add-ons */}
+                <div className="rounded-xl bg-card-gradient border border-border/40 p-5 shadow-card">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Baby className="w-5 h-5 text-primary" />
+                    <span className="text-sm font-bold text-foreground">Children Add-ons</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-trainline-success/10 text-trainline-success ml-auto">Kids stay free at hotel</span>
+                  </div>
+                  <div className="space-y-3">
+                    {kids.map((kid, i) => (
+                      <div key={kid.name} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-secondary/30 border border-border/20">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                            {kid.name[0]}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{kid.name} <span className="text-muted-foreground font-normal">({kid.age})</span></p>
+                            <p className="text-xs text-muted-foreground">{kid.discount}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {kidSurcharges[i].amount === 0 ? (
+                            <span className="text-sm font-bold text-trainline-success">FREE</span>
+                          ) : (
+                            <span className="text-sm font-bold text-foreground">+£{kidSurcharges[i].amount}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Package extras */}
+                <div className="rounded-xl bg-card-gradient border border-border/40 p-5 shadow-card">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Gift className="w-5 h-5 text-accent" />
+                    <span className="text-sm font-bold text-foreground">Included in Package</span>
+                  </div>
+                  <div className="space-y-2">
+                    {packageExtras.map((extra) => (
+                      <div key={extra.id} className="flex items-center justify-between py-2 border-b border-border/15">
+                        <div className="flex items-center gap-2.5">
+                          <extra.icon className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <span className="text-sm text-foreground">{extra.name}</span>
+                            <p className="text-xs text-muted-foreground">{extra.desc}</p>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 ml-4">
+                          {extra.free ? (
+                            <div>
+                              <span className="text-sm font-bold text-trainline-success">FREE</span>
+                              <p className="text-xs text-muted-foreground line-through">£{extra.marketPrice}</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="text-sm font-bold text-foreground">£{extra.price}</span>
+                              <p className="text-xs text-muted-foreground line-through">£{extra.marketPrice}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Package total */}
+                <div className="rounded-2xl bg-primary/5 border border-primary/30 p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-xl font-bold text-foreground">Family Package Total</p>
+                      <p className="text-xs text-muted-foreground">2 adults + 3 kids · Transport + hotel + extras</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground line-through">£{marketTotal}</p>
+                      <p className="text-3xl font-bold text-gradient-teal">£{packagePrice}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-trainline-success/10 border border-trainline-success/20">
+                    <TrendingUp className="w-5 h-5 text-trainline-success shrink-0" />
                     <p className="text-sm font-semibold text-trainline-success">
-                      {selectedUpgrades.length} upgrade{selectedUpgrades.length > 1 ? "s" : ""} · +£{upgradesTotal}
+                      You're saving £{totalSavings} ({Math.round((totalSavings / marketTotal) * 100)}%) vs booking separately
                     </p>
-                  </motion.div>
-                )}
-              </div>
-            )}
-
-            {/* Multi-Trip Planner */}
-            {currentStep === "multitrip" && (
-              <div className="space-y-8">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold font-display">Everyone Converges in Zürich</h2>
-                  <p className="text-muted-foreground mt-2">Your friend from Paris, your wife from Berlin — all meeting you in transit</p>
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-4">
-                  {/* Marcus */}
-                  <div className="rounded-2xl bg-card-gradient border border-primary/30 p-6 shadow-card">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center">
-                        <Briefcase className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">Marcus (You)</p>
-                        <p className="text-xs text-muted-foreground">London</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="p-2 rounded-lg bg-secondary/50 text-xs">
-                        <span className="text-primary font-medium">Eurostar</span> London → Paris
-                      </div>
-                      <div className="p-2 rounded-lg bg-secondary/50 text-xs">
-                        <span className="text-primary font-medium">TGV</span> Paris → Zürich
-                      </div>
-                    </div>
-                    <div className="mt-3 text-xs text-muted-foreground">Arrives Zürich: 18:42</div>
                   </div>
-
-                  {/* James */}
-                  <div className="rounded-2xl bg-card-gradient border border-accent/30 p-6 shadow-card">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center">
-                        <Users className="w-4 h-4 text-accent" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{friendJourney.name}</p>
-                        <p className="text-xs text-muted-foreground">{friendJourney.from}</p>
-                      </div>
-                    </div>
-                    {friendJourney.segments.map((seg, i) => (
-                      <div key={i} className="p-2 rounded-lg bg-secondary/50 text-xs">
-                        <span className="text-accent font-medium">{seg.mode}</span> {seg.from} → {seg.to}
-                        <span className="float-right text-muted-foreground">{seg.price}</span>
-                      </div>
-                    ))}
-                    <div className="mt-3 text-xs text-muted-foreground">Arrives Zürich: 17:30</div>
-                  </div>
-
-                  {/* Anika */}
-                  <div className="rounded-2xl bg-card-gradient border border-trainline-success/30 p-6 shadow-card">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-trainline-success/15 flex items-center justify-center">
-                        <Users className="w-4 h-4 text-trainline-success" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{spouseJourney.name}</p>
-                        <p className="text-xs text-muted-foreground">{spouseJourney.from}</p>
-                      </div>
-                    </div>
-                    {spouseJourney.segments.map((seg, i) => (
-                      <div key={i} className="p-2 rounded-lg bg-secondary/50 text-xs">
-                        <span className="text-trainline-success font-medium">{seg.mode}</span> {seg.from} → {seg.to}
-                        <span className="float-right text-muted-foreground">{seg.price}</span>
-                      </div>
-                    ))}
-                    <div className="mt-3 text-xs text-muted-foreground">Arrives Zürich: 19:15</div>
-                  </div>
-                </div>
-
-                {/* Convergence point */}
-                <div className="rounded-2xl bg-accent/5 border border-accent/20 p-6 text-center">
-                  <div className="w-14 h-14 rounded-full bg-accent/15 flex items-center justify-center mx-auto mb-3">
-                    <Globe className="w-7 h-7 text-accent" />
-                  </div>
-                  <h3 className="text-lg font-bold font-display text-foreground">Meet in Zürich</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    All 3 travellers converge at Zürich HB between 17:30 and 19:15
-                  </p>
-                  <p className="text-xs text-accent mt-2 font-medium">
-                    🍽 Dinner booked at Kronenhalle · 20:00 · Party of 4 (inc. child)
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Then continue together: Zürich → Dubai on Emirates the next morning
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-center">
-                  <p className="text-sm text-foreground font-medium">
-                    All journeys coordinated. All tickets in one app. Real-time delay alerts for everyone.
-                  </p>
                 </div>
               </div>
             )}
 
-            {/* Checkout */}
+            {/* CHECKOUT */}
             {currentStep === "checkout" && (
               <div className="space-y-8">
                 <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold font-display">Complete Your Premium Booking</h2>
-                  <p className="text-muted-foreground mt-2">Travel, upgrades, and hotel — one checkout</p>
+                  <h2 className="text-3xl font-bold font-display">Confirm Your Family Package</h2>
+                  <p className="text-muted-foreground mt-2">Everything in one booking — one price</p>
                 </div>
 
-                <div className="rounded-2xl bg-card-gradient border border-border/40 p-7 shadow-card space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Journey (per person × 3)</h3>
-                  {segments.map((seg, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-border/20">
-                      <div className="flex items-center gap-3">
-                        <seg.icon className="w-4 h-4 text-primary" />
-                        <span className="text-sm text-foreground">{seg.detail}: {seg.from} → {seg.to}</span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">£{seg.price * 3}</span>
+                <div className="rounded-2xl bg-card-gradient border border-border/40 p-7 shadow-card space-y-4 max-w-2xl mx-auto">
+                  <h4 className="text-xs text-primary font-medium uppercase tracking-wider">Marcus · London → Zürich</h4>
+                  {marcusSegments.map((seg) => (
+                    <div key={seg.id} className="flex items-center justify-between py-1.5 border-b border-border/20">
+                      <span className="text-sm text-foreground">{seg.detail}: {seg.from} → {seg.to}</span>
+                      <span className="text-sm font-medium text-foreground">£{seg.price}</span>
                     </div>
                   ))}
 
-                  {selectedUpgrades.length > 0 && (
-                    <>
-                      <h4 className="text-xs text-accent font-medium uppercase tracking-wider pt-2">Upgrades</h4>
-                      {upgrades.filter(u => selectedUpgrades.includes(u.name)).map(u => (
-                        <div key={u.name} className="flex items-center justify-between py-2 border-b border-border/20">
-                          <span className="text-sm text-foreground">{u.name}</span>
-                          <span className="text-sm font-medium text-primary">£{u.price}</span>
-                        </div>
-                      ))}
-                    </>
-                  )}
+                  <h4 className="text-xs text-[hsl(25,80%,55%)] font-medium uppercase tracking-wider pt-2">Anika · Berlin → Zürich</h4>
+                  {anikaSegments.map((seg) => (
+                    <div key={seg.id} className="flex items-center justify-between py-1.5 border-b border-border/20">
+                      <span className="text-sm text-foreground">{seg.detail}: {seg.from} → {seg.to}</span>
+                      <span className="text-sm font-medium text-foreground">£{seg.price}</span>
+                    </div>
+                  ))}
+
+                  <h4 className="text-xs text-accent font-medium uppercase tracking-wider pt-2">Shared · Zürich → Dubai (×2 adults)</h4>
+                  {sharedSegments.map((seg) => (
+                    <div key={seg.id} className="flex items-center justify-between py-1.5 border-b border-border/20">
+                      <span className="text-sm text-foreground">{seg.detail}: {seg.from} → {seg.to}</span>
+                      <span className="text-sm font-medium text-foreground">£{seg.price * 2}</span>
+                    </div>
+                  ))}
+
+                  <h4 className="text-xs text-primary font-medium uppercase tracking-wider pt-2">Children</h4>
+                  {kidSurcharges.map((k) => (
+                    <div key={k.name} className="flex items-center justify-between py-1.5 border-b border-border/20">
+                      <span className="text-sm text-foreground">{k.name} — {k.detail}</span>
+                      <span className={`text-sm font-medium ${k.amount === 0 ? "text-trainline-success" : "text-foreground"}`}>
+                        {k.amount === 0 ? "FREE" : `£${k.amount}`}
+                      </span>
+                    </div>
+                  ))}
+
+                  <h4 className="text-xs text-accent font-medium uppercase tracking-wider pt-2">Package Extras</h4>
+                  {packageExtras.map((e) => (
+                    <div key={e.id} className="flex items-center justify-between py-1.5 border-b border-border/20">
+                      <span className="text-sm text-foreground">{e.name}</span>
+                      <span className={`text-sm font-medium ${e.free ? "text-trainline-success" : "text-foreground"}`}>
+                        {e.free ? "FREE" : `£${e.price}`}
+                      </span>
+                    </div>
+                  ))}
 
                   <div className="flex items-center justify-between pt-4">
-                    <span className="text-lg font-bold text-foreground">Grand Total</span>
+                    <span className="text-lg font-bold text-foreground">Family Package Total</span>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-gradient-teal">£{totalJourney * 3 + upgradesTotal}</p>
-                      <p className="text-xs text-muted-foreground">Family of 3 + upgrades</p>
+                      <p className="text-xs text-muted-foreground line-through">Market: £{marketTotal}</p>
+                      <p className="text-2xl font-bold text-gradient-teal">£{packagePrice}</p>
+                      <p className="text-xs text-trainline-success font-semibold">Saving £{totalSavings}</p>
                     </div>
                   </div>
 
@@ -425,14 +491,14 @@ const BusinessDemo = () => {
                     <CreditCard className="w-5 h-5 text-primary" />
                     <div>
                       <p className="text-sm font-medium text-foreground">Amex Platinum ****1903</p>
-                      <p className="text-xs text-muted-foreground">Earn {Math.round(grandTotal * 3)} loyalty points + 2x Amex points</p>
+                      <p className="text-xs text-muted-foreground">Earn {Math.round(packagePrice)} loyalty points + 2× Amex points</p>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Confirmation */}
+            {/* CONFIRMATION */}
             {currentStep === "confirmation" && (
               <div className="space-y-8 text-center">
                 <motion.div
@@ -445,8 +511,8 @@ const BusinessDemo = () => {
                 </motion.div>
 
                 <div>
-                  <h2 className="text-3xl font-bold font-display">Bon Voyage, Marcus! ✈️</h2>
-                  <p className="text-muted-foreground mt-2">Everything booked. Everyone connected. All in one place.</p>
+                  <h2 className="text-3xl font-bold font-display">Bon Voyage, Chen Family! ✈️</h2>
+                  <p className="text-muted-foreground mt-2">5 travellers · 4 countries · 1 seamless booking</p>
                 </div>
 
                 <div className="rounded-2xl bg-card-gradient border border-border/40 p-7 shadow-card max-w-lg mx-auto text-left space-y-4">
@@ -455,28 +521,60 @@ const BusinessDemo = () => {
                     <span className="text-sm font-bold text-primary font-mono">TH-2025-DXB-3159</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Journey</span>
+                    <span className="text-sm text-muted-foreground">Marcus</span>
                     <span className="text-sm font-medium text-foreground">London → Paris → Zürich → Dubai</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Travellers</span>
-                    <span className="text-sm font-medium text-foreground">Marcus, Anika + child</span>
+                    <span className="text-sm text-muted-foreground">Anika</span>
+                    <span className="text-sm font-medium text-foreground">Berlin → Zürich → Dubai</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Co-Travellers</span>
-                    <span className="text-sm font-medium text-accent">James (Paris → Zürich)</span>
+                    <span className="text-sm text-muted-foreground">Children</span>
+                    <span className="text-sm font-medium text-foreground">Liam (8), Sophie (5), Ava (2)</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Total Value</span>
-                    <span className="text-sm font-bold text-gradient-teal">£{totalJourney * 3 + upgradesTotal}</span>
+                    <span className="text-sm text-muted-foreground">Package Value</span>
+                    <span className="text-sm font-bold text-gradient-teal">£{packagePrice}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Total Saved</span>
+                    <span className="text-sm font-bold text-trainline-success">£{totalSavings}</span>
+                  </div>
+                </div>
+
+                {/* Loyalty across countries */}
+                <div className="max-w-lg mx-auto space-y-4 text-left">
+                  <h3 className="text-center text-lg font-bold font-display text-foreground flex items-center justify-center gap-2">
+                    <Plane className="w-5 h-5 text-primary" />
+                    Loyalty Points Earned Across 4 Countries
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { country: "🇬🇧 UK", pts: Math.round(marcusTotal * 0.4), program: "Trainline Rewards" },
+                      { country: "🇫🇷 France", pts: Math.round(72 * 0.3), program: "SNCF Connect" },
+                      { country: "🇩🇪 Germany", pts: Math.round(anikaTotal * 0.3), program: "BahnBonus" },
+                      { country: "🇦🇪 UAE", pts: Math.round(sharedTotal * 2 * 0.5), program: "Skywards" },
+                    ].map((item) => (
+                      <div key={item.country} className="rounded-xl bg-card-gradient border border-border/40 p-4 shadow-card">
+                        <p className="text-sm font-bold text-foreground">{item.country}</p>
+                        <p className="text-lg font-bold text-accent">{item.pts} pts</p>
+                        <p className="text-xs text-muted-foreground">{item.program}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 flex items-center gap-3">
+                    <TrendingUp className="w-5 h-5 text-primary shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      <span className="text-foreground font-semibold">Total: {Math.round(marcusTotal * 0.4 + 72 * 0.3 + anikaTotal * 0.3 + sharedTotal * 2 * 0.5)} points</span> earned across all partner programs — redeemable for flights, upgrades, and lounge access
+                    </p>
                   </div>
                 </div>
 
                 <div className="rounded-2xl bg-accent/5 border border-accent/20 p-5 max-w-lg mx-auto">
                   <p className="text-sm text-accent font-semibold mb-1">💰 Revenue Captured</p>
                   <p className="text-xs text-muted-foreground">
-                    Without Travel Hub, Trainline would capture only £{totalJourney} (one ticket). 
-                    Now capturing £{totalJourney * 3 + upgradesTotal} — a <span className="text-trainline-success font-bold">{Math.round(((totalJourney * 3 + upgradesTotal) / totalJourney - 1) * 100)}% increase</span> in customer lifetime value per trip.
+                    Without Travel Hub, Trainline captures only £{marcusTotal} (one rail ticket).
+                    Now capturing £{packagePrice} — a <span className="text-trainline-success font-bold">{Math.round((packagePrice / marcusTotal - 1) * 100)}% increase</span> in customer value per trip.
                   </p>
                 </div>
 
@@ -489,7 +587,7 @@ const BusinessDemo = () => {
         </AnimatePresence>
 
         {/* Navigation */}
-        <div className="max-w-4xl mx-auto mt-12 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto mt-12 flex items-center justify-between">
           <button
             onClick={prev}
             disabled={stepIndex === 0}
