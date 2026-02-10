@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Train, Plane, ArrowRight, ArrowLeft, GraduationCap, MapPin, Leaf, Star, 
   Utensils, Gift, Percent, Clock, Search, ChevronRight, Check, 
-  CreditCard, Sparkles, ShoppingBag, Coffee, Wifi, BadgePercent
+  CreditCard, Sparkles, ShoppingBag, Coffee, Wifi, BadgePercent, Trophy, TrendingUp
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -473,6 +473,122 @@ const StudentDemo = () => {
                       <span className="text-sm font-bold text-trainline-success">{selectedDeals.length} deals</span>
                     </div>
                   )}
+                </div>
+
+                {/* Airline Loyalty Redemption */}
+                <div className="max-w-2xl mx-auto space-y-5 text-left">
+                  <div className="text-center">
+                    <h3 className="text-lg font-bold font-display text-foreground flex items-center justify-center gap-2">
+                      <Plane className="w-5 h-5 text-primary" />
+                      Redeem Your Points with Partner Airlines
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Your {Math.round(totalJourney)} new points + 1,247 existing = <span className="text-accent font-semibold">{Math.round(totalJourney) + 1247} total points</span>
+                    </p>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* British Airways */}
+                    <div className="rounded-2xl border border-[hsl(220,50%,25%)] bg-[hsl(220,40%,12%)] p-5 shadow-card space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[hsl(220,60%,20%)] flex items-center justify-center">
+                          <Plane className="w-5 h-5 text-[hsl(0,70%,55%)]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">British Airways</p>
+                          <p className="text-xs text-muted-foreground">Avios Programme</p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-secondary/50 px-3 py-2 flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Conversion Rate</span>
+                        <span className="text-xs font-bold text-foreground">1 pt = 0.8 Avios</span>
+                      </div>
+
+                      <div className="text-sm text-muted-foreground">
+                        Your balance: <span className="text-foreground font-semibold">{Math.round((Math.round(totalJourney) + 1247) * 0.8)} Avios</span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Next: <span className="text-foreground font-medium">Lounge Pass</span></span>
+                          <span className="text-[hsl(0,70%,55%)] font-semibold">{Math.round((Math.round(totalJourney) + 1247) * 0.8)}/2,000 Avios</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                          <div className="h-full rounded-full bg-[hsl(0,70%,55%)] transition-all" style={{ width: `${Math.min(100, ((Math.round(totalJourney) + 1247) * 0.8 / 2000) * 100)}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Redemption Examples</p>
+                        {[
+                          { pts: "500 Avios", reward: "Domestic seat upgrade" },
+                          { pts: "2,000 Avios", reward: "BA Lounge day pass" },
+                          { pts: "4,000 Avios", reward: "Europe short-haul flight" },
+                        ].map(r => (
+                          <div key={r.reward} className="flex items-center justify-between text-xs py-1.5 border-b border-border/20">
+                            <span className="text-foreground">{r.reward}</span>
+                            <span className="text-[hsl(0,70%,55%)] font-medium">{r.pts}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Air India */}
+                    <div className="rounded-2xl border border-[hsl(25,50%,25%)] bg-[hsl(25,30%,11%)] p-5 shadow-card space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[hsl(25,60%,18%)] flex items-center justify-center">
+                          <Plane className="w-5 h-5 text-[hsl(25,80%,55%)]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">Air India</p>
+                          <p className="text-xs text-muted-foreground">Flying Returns</p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-secondary/50 px-3 py-2 flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Conversion Rate</span>
+                        <span className="text-xs font-bold text-foreground">1 pt = 1.2 Miles</span>
+                      </div>
+
+                      <div className="text-sm text-muted-foreground">
+                        Your balance: <span className="text-foreground font-semibold">{Math.round((Math.round(totalJourney) + 1247) * 1.2)} Miles</span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Next: <span className="text-foreground font-medium">Mumbai Seat Upgrade</span></span>
+                          <span className="text-[hsl(25,80%,55%)] font-semibold">{Math.round((Math.round(totalJourney) + 1247) * 1.2)}/2,500 Miles</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                          <div className="h-full rounded-full bg-[hsl(25,80%,55%)] transition-all" style={{ width: `${Math.min(100, ((Math.round(totalJourney) + 1247) * 1.2 / 2500) * 100)}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Redemption Examples</p>
+                        {[
+                          { pts: "1,000 Miles", reward: "Extra baggage (Mumbai route)" },
+                          { pts: "2,500 Miles", reward: "Mumbai seat upgrade" },
+                          { pts: "5,000 Miles", reward: "Companion voucher (domestic)" },
+                        ].map(r => (
+                          <div key={r.reward} className="flex items-center justify-between text-xs py-1.5 border-b border-border/20">
+                            <span className="text-foreground">{r.reward}</span>
+                            <span className="text-[hsl(25,80%,55%)] font-medium">{r.pts}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Earn more prompt */}
+                  <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 flex items-center gap-3">
+                    <TrendingUp className="w-5 h-5 text-primary shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Book 2 more trips to unlock a BA Lounge Pass</p>
+                      <p className="text-xs text-muted-foreground">You're {2000 - Math.round((Math.round(totalJourney) + 1247) * 0.8)} Avios away — that's just 2 return trips to London</p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl bg-accent/5 border border-accent/20 p-5 max-w-lg mx-auto">
