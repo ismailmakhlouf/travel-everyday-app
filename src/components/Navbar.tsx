@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Train } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   return (
@@ -35,10 +36,19 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-xs text-muted-foreground px-3 py-1.5 rounded-full border border-border">
-            Demo Experience
-          </span>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/demo/student"
+            className="text-xs px-3 py-1.5 rounded-full border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+          >
+            Student Demo
+          </Link>
+          <Link
+            to="/demo/business"
+            className="text-xs px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:shadow-teal-glow transition-all"
+          >
+            Premium Demo
+          </Link>
         </div>
       </div>
     </motion.nav>
