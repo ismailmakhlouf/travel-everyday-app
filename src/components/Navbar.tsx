@@ -47,7 +47,7 @@ const Navbar = () => {
             to="/demo/business"
             className="text-xs px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:shadow-teal-glow transition-all"
           >
-            Premium Demo
+            Family Demo
           </Link>
         </div>
       </div>
