@@ -774,13 +774,13 @@ const BusinessDemo = () => {
                           transition={{ delay: 0.4 }}
                           className="rounded-xl p-5 text-center border"
                           style={{
-                            background: "linear-gradient(135deg, hsl(25 30% 12%), hsl(25 40% 16%))",
-                            borderColor: "hsl(25 60% 40% / 0.4)"
+                            background: "linear-gradient(135deg, hsl(30 30% 12%), hsl(30 40% 16%))",
+                            borderColor: "hsl(30 60% 40% / 0.4)"
                           }}
                         >
-                          <p className="text-lg font-bold text-foreground">Air India</p>
-                          <p className="text-3xl font-bold mt-2" style={{ color: "hsl(25 80% 55%)" }}>475</p>
-                          <p className="text-xs text-muted-foreground mt-1">Flying Returns Miles</p>
+                          <p className="text-lg font-bold text-foreground">Emirates</p>
+                          <p className="text-3xl font-bold mt-2" style={{ color: "hsl(30 80% 55%)" }}>475</p>
+                          <p className="text-xs text-muted-foreground mt-1">Skywards Miles</p>
                           <p className="text-[10px] text-muted-foreground/70 mt-2">1 pt = 1.2 Miles</p>
                         </motion.div>
                       </div>
