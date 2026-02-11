@@ -45,9 +45,15 @@ const Navbar = () => {
           </Link>
           <Link
             to="/demo/business"
+            className="text-xs px-3 py-1.5 rounded-full border border-accent/30 text-accent hover:bg-accent/10 transition-colors"
+          >
+            Pitch Deck
+          </Link>
+          <Link
+            to="/simulator/family"
             className="text-xs px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:shadow-teal-glow transition-all"
           >
-            Family Demo
+            Family Simulator
           </Link>
         </div>
       </div>
