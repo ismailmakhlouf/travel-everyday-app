@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import StudentDemo from "./pages/StudentDemo";
 import BusinessDemo from "./pages/BusinessDemo";
 import FamilySimulator from "./pages/FamilySimulator";
+import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,6 +21,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/demo/student" element={<StudentDemo />} />
           <Route path="/demo/business" element={<BusinessDemo />} />
           <Route path="/simulator/family" element={<FamilySimulator />} />
