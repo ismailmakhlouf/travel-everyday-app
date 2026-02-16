@@ -4,13 +4,16 @@ import {
   Zap, BarChart3, CheckCircle2, Eye, Settings2, Award, Star, Layers, DollarSign,
   TrendingUp,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useJourneyState, STEPS } from "@/hooks/useJourneyState";
 import {
   RAIL_OPTIONS, FLIGHT_OPTIONS, HOTEL_OPTIONS, ANCILLARY_OPTIONS,
   isAncillaryFree,
 } from "@/lib/pricingEngine";
 import ExecutiveDashboard from "@/components/ExecutiveDashboard";
+import UserSwitcher from "@/components/UserSwitcher";
+import TravelConcierge from "@/components/TravelConcierge";
+import { useAuth } from "@/hooks/useAuth";
 
 const stepMeta = {
   rail: { label: "Rail", icon: Train },
@@ -22,13 +25,17 @@ const stepMeta = {
 } as const;
 
 const FamilySimulator = () => {
+  const { user, loading } = useAuth();
   const {
     selections, step, stepIndex, view, optimizing, adoptionRate,
     computed, preOptComputed, fleet, railGroups,
     setStep, setView, setAdoptionRate,
     selectRail, selectFlight, selectHotel, toggleAncillary,
-    handleOptimize, nextStep, prevStep,
-  } = useJourneyState();
+    handleOptimize, nextStep, prevStep, applyAIAction,
+  } = useJourneyState(user?.id);
+
+  if (loading) return null;
+  if (!user) return <Navigate to="/auth" replace />;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -43,6 +50,8 @@ const FamilySimulator = () => {
               Travel Hub <span className="text-primary text-xs font-normal ml-1">Simulator</span>
             </span>
           </Link>
+
+          <UserSwitcher />
 
           <div className="flex items-center gap-1 bg-secondary/60 rounded-lg p-0.5">
             <button
@@ -642,6 +651,14 @@ const FamilySimulator = () => {
           </AnimatePresence>
         )}
       </div>
+
+      {/* ─── AI Concierge ─── */}
+      <TravelConcierge
+        selections={selections}
+        computed={computed}
+        fleet={fleet}
+        onAction={applyAIAction}
+      />
 
       {/* ─── Bottom nav ─── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 glass-surface border-t border-border/20">

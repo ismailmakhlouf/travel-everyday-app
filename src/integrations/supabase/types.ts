@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          preferred_persona: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          preferred_persona?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          preferred_persona?: string | null
+        }
+        Relationships: []
+      }
+      saved_journeys: {
+        Row: {
+          computed_summary: Json | null
+          created_at: string
+          id: string
+          name: string
+          selections: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          computed_summary?: Json | null
+          created_at?: string
+          id?: string
+          name?: string
+          selections?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          computed_summary?: Json | null
+          created_at?: string
+          id?: string
+          name?: string
+          selections?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
