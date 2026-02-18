@@ -94,7 +94,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      introspect_functions: { Args: never; Returns: Json }
+      introspect_rls_policies: { Args: never; Returns: Json }
+      introspect_rls_status: { Args: never; Returns: Json }
+      introspect_tables: { Args: never; Returns: Json }
+      introspect_triggers: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
