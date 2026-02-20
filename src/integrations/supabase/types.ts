@@ -38,6 +38,45 @@ export type Database = {
         }
         Relationships: []
       }
+      deploy_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          key_delivery: string
+          service_role_key: string | null
+          source_config: Json
+          stage_results: Json
+          stages: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          key_delivery?: string
+          service_role_key?: string | null
+          source_config?: Json
+          stage_results?: Json
+          stages?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          key_delivery?: string
+          service_role_key?: string | null
+          source_config?: Json
+          stage_results?: Json
+          stages?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
