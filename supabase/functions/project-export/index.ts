@@ -7,6 +7,43 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+async function extractTableData(
+  supabase: ReturnType<typeof createClient>,
+  tableName: string,
+  since?: string
+) {
+  const allRows: Record<string, unknown>[] = [];
+  const batchSize = 1000;
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    let query = supabase.from(tableName).select("*").range(offset, offset + batchSize - 1);
+
+    if (since) {
+      // Try updated_at first, fall back to created_at
+      query = query.or(`updated_at.gte.${since},created_at.gte.${since}`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(`Error extracting ${tableName}:`, error.message);
+      return { rows: allRows, total_count: allRows.length, error: error.message };
+    }
+
+    if (data && data.length > 0) {
+      allRows.push(...data);
+      offset += batchSize;
+      hasMore = data.length === batchSize;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return { rows: allRows, total_count: allRows.length };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,8 +53,22 @@ serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Extract project ref from SUPABASE_URL (https://<ref>.supabase.co)
   const projectRef = supabaseUrl.replace("https://", "").split(".")[0];
+  const url = new URL(req.url);
+  const includeData = url.searchParams.get("include_data") === "true";
+  const tablesParam = url.searchParams.get("tables");
+  const sinceParam = url.searchParams.get("since");
+
+  // If include_data is requested, validate Service Role Key auth
+  if (includeData) {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || authHeader !== `Bearer ${serviceRoleKey}`) {
+      return new Response(JSON.stringify({ error: "Unauthorized. Service Role Key required for data extraction." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
 
   try {
     // Run all introspection queries in parallel
@@ -59,7 +110,7 @@ serve(async (req) => {
       tables[tableName].rls_policies = rlsPolicies[tableName] ?? [];
     }
 
-    // Filter out the introspection functions themselves from the export
+    // Filter out introspection functions
     const allFunctions = (funcsRes.data ?? []) as Array<{ name: string }>;
     const introspectionNames = new Set([
       "introspect_tables",
@@ -72,22 +123,47 @@ serve(async (req) => {
       (f) => !introspectionNames.has(f.name)
     );
 
+    // Extract table data if requested
+    let tableData: Record<string, unknown> | undefined;
+    if (includeData) {
+      const tableNames = tablesParam
+        ? tablesParam.split(",").map((t) => t.trim())
+        : Object.keys(tables);
+
+      tableData = {};
+      const dataPromises = tableNames.map(async (name) => {
+        const result = await extractTableData(supabase, name, sinceParam || undefined);
+        return { name, result };
+      });
+
+      const results = await Promise.all(dataPromises);
+      for (const { name, result } of results) {
+        tableData[name] = result;
+      }
+    }
+
+    const database: Record<string, unknown> = {
+      tables,
+      functions: projectFunctions,
+      triggers: triggersRes.data ?? [],
+    };
+
+    if (tableData) {
+      database.table_data = tableData;
+    }
+
     const projectExport = {
       meta: {
         exported_at: new Date().toISOString(),
         project_ref: projectRef,
-        version: "2.1",
+        version: "2.2",
         description:
-          "Dynamic project introspection. Portable across any Lovable Cloud / Supabase project.",
+          "Dynamic project introspection with optional data extraction. Portable across any Lovable Cloud / Supabase project.",
+        include_data: includeData,
       },
 
-      database: {
-        tables,
-        functions: projectFunctions,
-        triggers: triggersRes.data ?? [],
-      },
+      database,
 
-      // Delegate auth + edge function source to GitHub
       github_delegation: {
         description:
           "Auth config and edge function source cannot be introspected via SQL. " +
